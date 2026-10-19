@@ -5,7 +5,7 @@ provider "aws" {
 resource "aws_instance" "example" {
   ami           = var.ami_value
   instance_type = var.instance_type
-  vpc_security_group_ids = [aws_security_group.sg.id]
+  vpc_security_group_ids = [aws_security_group.sg.id, aws_security_group.sg2.id]
 
   tags = {
     name = "example-instance"
@@ -48,6 +48,18 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4" {
   ip_protocol       = "-1" # semantically equivalent to all ports
 }
 
+resource "aws_security_group" "sg2" {
+  name        = "sg2"
+  description = "Security group for EC2 instance"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_http2" {
+  security_group_id = aws_security_group.sg2.id
+  cidr_ipv4         = "${aws_eip.eip.public_ip}/32"
+  from_port         = var.app_port
+  ip_protocol       = "tcp"
+  to_port           = var.app_port
+}
 output "public_ip" {
   value = "https://${aws_eip.eip.public_ip}:8080"
 }
